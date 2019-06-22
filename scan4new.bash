@@ -14,12 +14,10 @@ conf=$nscan/conf
 log=$nscan/log
 temp=$nscan/temp
 reports=$nscan/reports
-sectool=$reports/sectool
+csvexport=$reports/csvexport
 #
-#
-# Support files
-# 
-# Test and create directories needed
+# Support files 
+# Test and create directories files needed needed
 if [ -d $conf ]
   then
     echo "$conf exist" > /dev/null
@@ -50,12 +48,12 @@ if [ -d $reports/new ]
     echo "$reports/new does not exist creating"
     mkdir $reports/new
 fi
-if [ -d $sectool ]
+if [ -d $csvexport ]
   then
-    echo "$sectool" > /dev/null
+    echo "$csvexport" > /dev/null
   else
-    echo "$sectool does not exist creating"
-    mkdir $sectool
+    echo "$csvexport does not exist creating"
+    mkdir $csvexport
 fi
 # Test and create directories needed complete
 # Start work
@@ -79,8 +77,6 @@ do
   fi
   ###   put checking code here ###
   /usr/sbin/ifup $ethX
-  ip a show
-  sleep 20
   ###   put checking code here ###
   nmap -p 22,88,389,445,636,3268,3269, $cidr -oG $temp/$vln.txt
   for host in `cat $temp/$vln.txt|grep Up|awk '{print $2}'`
@@ -91,21 +87,19 @@ do
       echo "null" > /dev/null
     else
       # start host interigation commands
-      hname=`nmap -Pn -R -p 22 $host|grep $host|awk '{print $5}'`
+      hname=`nmap -Pn -R -p 22,53,389,445 $host|grep $host|awk '{print $5}'`
       nmap -A $host -oX $reports/new/$hname.xml
-      # Alert MTOC 
-      echo "sendmail or smtp setup for mtoc needed here"
       echo "NEW HOST DETECTED!!!!!"
       echo "HOSTNAME = $hname IPADDR = $host"
       # append to ip and host name to baseline
       echo "HOSTNAME = $hname IPADDR = $host" >> $conf/baseline_$vln.txt
-      # append to sectool file
+      # append to csv file
       # site,in stock, hostname,device type,operating system,network, CMDB ID,  application,AD Domain, managed by, is GXP, IPADDR,  phys location, Environment,is virtual
       #get OS type
       #osmatch=`cat $reports/new/hname.xml|grep "osmatch name="|awk -F= '{print$2}'`
-      echo "$osmatch"
-      echo "Framingham Biologics,yes,$hname,$osmatch,$host" >> $sectool/discovered_host.csv
-      # sectool export complete
+      echo "Hardcoded site per vsphere"
+      echo "Vsphere name,yes,$hname,$osmatch,$host" >> $csvexport/discovered_host.csv
+      # csvexport export complete
     fi
   done
   /usr/sbin/ifdown $ethX
